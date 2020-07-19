@@ -1,6 +1,9 @@
 package com.eduardoabe.prova.service;
 
+import java.util.InputMismatchException;
 import java.util.List;
+
+import javax.naming.directory.InvalidAttributesException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -14,26 +17,38 @@ import javassist.NotFoundException;
 
 @Service
 public class PessoaService {
-	
+
 	@Autowired
 	private PessoaRepository repository;
+
+	private EnderecoService enderecoService = new EnderecoService();
 	
-	public Pessoa newPessoa(Pessoa pessoa) {
+	public Pessoa newPessoa(Pessoa pessoa) throws InvalidAttributesException {
+		if(!validaPessoa(pessoa)) {
+			throw new InvalidAttributesException("Atributos inválidos");
+		}
 		return repository.insert(pessoa);
+		
 	}
 
-	public Pessoa updatePessoa(Pessoa pessoa, String id) throws NotFoundException {
-		Pessoa pessoaToUpdate = repository.findById(id).orElseThrow(() -> new NotFoundException("Pessoa não encontrada"));
+	public Pessoa updatePessoa(Pessoa pessoa, String id) throws NotFoundException, InvalidAttributesException {
 		
+		if(!validaPessoa(pessoa)) {
+			throw new InvalidAttributesException("Atributos inválidos");
+		}
+		
+		Pessoa pessoaToUpdate = repository.findById(id)
+				.orElseThrow(() -> new NotFoundException("Pessoa não encontrada"));
+
 		pessoaToUpdate.setCpf(pessoa.getCpf());
 		pessoaToUpdate.setNome(pessoa.getNome());
 		pessoaToUpdate.setEndereco(pessoa.getEndereco());
 		pessoaToUpdate.setPerfilAcesso(pessoa.getPerfilAcesso());
-		
+
 		return repository.save(pessoaToUpdate);
 	}
 
-	public void deletePessoa(String id){
+	public void deletePessoa(String id) {
 		repository.deleteById(id);
 	}
 
@@ -48,8 +63,14 @@ public class PessoaService {
 		pessoaFilter.setEndereco(enderecoFilter);
 		pessoaFilter.setPerfilAcesso(perfilAcesso);
 		Example example = Example.of(pessoaFilter);
-		
+
 		return repository.findAll(example);
 	}
-
+	
+	public boolean validaPessoa(Pessoa pessoa) {
+		if(pessoa.getCpf() != null && pessoa.getNome()  != null && pessoa.getPerfilAcesso() != null) {
+			return enderecoService.validaEndereco(pessoa.getEndereco());
+		}
+		return false;
+	}
 }

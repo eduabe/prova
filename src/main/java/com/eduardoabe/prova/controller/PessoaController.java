@@ -1,6 +1,10 @@
 package com.eduardoabe.prova.controller;
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+
 import java.util.List;
+
+import javax.naming.directory.InvalidAttributesException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,28 +43,37 @@ public class PessoaController {
 	}
 	
 	@PostMapping("/pessoa")
-	public Pessoa createPessoa(@RequestBody Pessoa pessoa) {
-		return service.newPessoa(pessoa);
+	public ResponseEntity<Pessoa> createPessoa(@RequestBody Pessoa pessoa) {
+		 
+		try {
+			Pessoa	createdPessoa = service.newPessoa(pessoa);
+			return new ResponseEntity<Pessoa>(createdPessoa, HttpStatus.CREATED);
+		} catch (InvalidAttributesException e) {
+			e.printStackTrace();
+			return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
 	}
 	
 	@PutMapping("/pessoa/{id}")
-	public ResponseEntity updatePessoa(@RequestBody Pessoa pessoa, @PathVariable String id) {
+	public ResponseEntity<Pessoa> updatePessoa(@RequestBody Pessoa pessoa, @PathVariable String id) {
 		try {
 			Pessoa updatedPessoa = service.updatePessoa(pessoa,id);
-			return new ResponseEntity(updatedPessoa, HttpStatus.OK);
+			return new ResponseEntity<Pessoa>(updatedPessoa, HttpStatus.OK);
 		} catch (NotFoundException e) {
 			e.printStackTrace();
-			return new ResponseEntity(HttpStatus.NO_CONTENT);
+			return new ResponseEntity<Pessoa>(HttpStatus.NO_CONTENT);
+		} catch (InvalidAttributesException e) {
+			return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
 	
 	@DeleteMapping("/pessoa/{id}")
-	public ResponseEntity deletePessoa(@PathVariable String id) {
+	public ResponseEntity<Pessoa> deletePessoa(@PathVariable String id) {
 		try {
 			service.deletePessoa(id);
-			return new ResponseEntity(HttpStatus.OK);
+			return new ResponseEntity<Pessoa>(HttpStatus.OK);
 		}catch (IllegalArgumentException e) {
-			return new ResponseEntity(HttpStatus.NO_CONTENT);
+			return new ResponseEntity<Pessoa>(HttpStatus.NO_CONTENT);
 		}
 	}
   
